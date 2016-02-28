@@ -10,6 +10,6 @@ spawn $binary $s_or_c $port
 
 expect "*" { send "PORT\n" }
 sleep 2
-expect "*" { send \003 }
+exec kill -SIGKILL [exp_pid]
 
 interact

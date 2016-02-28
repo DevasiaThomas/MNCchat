@@ -22,15 +22,19 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "../include/global.h"
 #include "../include/logger.h"
+#include "../include/server.h"
+#include "../include/client.h"
+#include "../include/comnd.h"
 
 /**
  * main function
  *
- * @param  argc Number of arguments
- * @param  argv The argument list
+ * @param  argc 2
+ * @param  argv mode ip-address
  * @return 0 EXIT_SUCCESS
  */
 int main(int argc, char **argv)
@@ -43,5 +47,29 @@ int main(int argc, char **argv)
 
 	/*Start Here*/
 
+	if(argc > 1){
+		if(strcmp(argv[1],"s")==0){
+			if(atoi(argv[2]) > 1024){
+				server(argv[1],argv[2]);
+			}
+			else{
+				printf("Specify unreserved port please\n");
+			}	
+		}
+		else if(strcmp(argv[1],"c")==0){
+			if(atoi(argv[2]) > 1024){
+				client(argv[1],argv[2]);
+			}
+			else{
+				printf("Specify unreserved port please\n");
+			}
+		}
+		else{
+			printf("Usage: assignment1 <mode>[s,c] <port>[>1024]\n");
+		}
+	}
+	else{
+		printf("Usage: assignment1 <mode>[s,c] <port>[>1024]\n");
+	}
 	return 0;
 }

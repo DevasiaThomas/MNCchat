@@ -8,7 +8,8 @@ set timeout 1
 
 spawn $binary $s_or_c $port
 
-expect "*" { send "AUTHOR\n" }
+sleep 10
+expect "*" { send "STATISTICS\n" }
 sleep 2
 exec kill -SIGKILL [exp_pid]
 
