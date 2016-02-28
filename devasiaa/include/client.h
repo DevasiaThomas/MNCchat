@@ -4,7 +4,7 @@
 static int login;
 struct list{
 	int list_id;
-	char hostname[35];
+	char hostname[33];
 	char ip_addr[16];
 	int port_num;
 	};

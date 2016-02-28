@@ -38,16 +38,19 @@ void server(char *mode, char *port){
 		exit(1);
 	}
 	printf("Socket created\n");
-	/*int yes = 1;
+	int yes = 1;
+
+	/*
 	if (setsockopt(ssockl,SOL_SOCKET,SO_REUSEADDR,(char *)&yes,sizeof(int)) == -1) {
 		perror("setsockopt");
 		exit(1);
 	}
+	*/
 	if (setsockopt(ssockl,SOL_SOCKET,SO_REUSEPORT,(char *)&yes,sizeof(int)) == -1) {
 		perror("setsockopt");
 		exit(1);
 	}
-	*/
+	
 
 	if((bind(ssockl,(struct sockaddr *)&server, sizeof(server)))<0){
 		perror("Cannot bind\n");
@@ -139,10 +142,10 @@ void server(char *mode, char *port){
 				int fflag=0;
 				top=lists;
 				while(top!=NULL){
-					if((strcmp(top->ip_addr,temp->ip_addr)==0)&&(top->sport==temp->sport)){
+					if((strcmp(top->ip_addr,temp->ip_addr)==0)&&(strcmp(top->port_num,temp->port_num)==0)){
 						printf("Setting flag to 1\n");
 						fflag = 1;
-						strcpy(top->port_num,temp->port_num);
+						top->sport=temp->sport;
 						free(temp);
 						temp = top;
 						break;
@@ -151,8 +154,8 @@ void server(char *mode, char *port){
 				}
 				if(fflag == 0){
 					top = lists;
+					printf("More than 1 CLient\n");
 					while(top!=NULL){
-						printf("More than 1 CLient\n");
 						if((atoi(top->port_num))>(atoi(temp->port_num))){
 							printf("Found place\n");
 							if(top->prev!=NULL){
@@ -203,7 +206,7 @@ void server(char *mode, char *port){
 				}
 			}
 					
-		//	printf("Client Socket Port %d\n",ntohs(client.sin_port));
+			printf("Client Socket Port %d\n",ntohs(client.sin_port));
 			FD_CLR(ssockl,&read_fds);
 		}
 	
@@ -273,7 +276,7 @@ void server(char *mode, char *port){
 							}
 						}
 						while((!bflag)&&(top1!=NULL)){
-							if(strcmp(top1->ip_addr,ip_str)==0){
+							if(!((strcmp(top1->ip_addr,ip_str)==0)&&(strcmp(top->port_num,top1->port_num)==0))){
 								sprintf(buff1,"%s %s",top->ip_addr,msg);
 								if(top1->status==1){
 									if(!sends(buff1,top1->ssockc)){
@@ -307,7 +310,7 @@ void server(char *mode, char *port){
 								}
 							}
 							if(!bflag){
-								if(!((strcmp(top->ip_addr,top1->ip_addr)==0)&&(top->sport==top1->sport))){
+								if(!((strcmp(top->ip_addr,top1->ip_addr)==0)&&(strcmp(top->port_num,top1->port_num)==0))){
 									if(top1->status==1){	
 										if(!sends(buff1,top1->ssockc)){
 											perror("BROADCASTing from server failed\n");
@@ -367,7 +370,7 @@ void server(char *mode, char *port){
 						}
 						top1=lists;
 						while(top1!=NULL){
-							if(strcmp(top1->hostname,ip_str)==0){
+							if(!((strcmp(top1->ip_addr,ip_str)==0)&&(strcmp(top->port_num,top1->port_num)==0))){
 								top->blocked[top->blocklen]=top1;
 								top->blocklen+=1;
 								if(top1->blockedby == NULL){
@@ -399,7 +402,7 @@ void server(char *mode, char *port){
 						top->blocklen-=1;
 						bflag=0;
 						while(top1!=NULL){
-							if(strcmp(top1->hostname,ip_str)==0){
+							if(!((strcmp(top1->ip_addr,ip_str)==0)&&(strcmp(top->port_num,top1->port_num)==0))){
 								for(int i =0;i<(top1->blockbylen)-1;i++){
 									if(bflag||(strcmp(top1->blockedby[top1->blockbylen]->ip_addr, ip_str)==0)){
 										bflag=1;

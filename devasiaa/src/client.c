@@ -41,16 +41,19 @@ void client(char *mode, char *port){
 		exit(1);
 	}
 	printf("listen:Socket created\n");
-	/*int yes=1;
+
+	int yes=1;
+	/*	
 	if (setsockopt(csockl,SOL_SOCKET,SO_REUSEADDR,(char *)&yes,sizeof(int)) == -1) {
 		perror("setsockopt");
 		exit(1);
 	}
+	*/
 	if (setsockopt(csockl,SOL_SOCKET,SO_REUSEPORT,(char *)&yes,sizeof(int)) == -1) {
 		perror("setsockopt");
 		exit(1);
 	}
-	*/
+	
 	if((bind(csockl,(struct sockaddr *)&client, sizeof(client)))<0){
 		perror("Cannot bind\n");
 		close(csockl);

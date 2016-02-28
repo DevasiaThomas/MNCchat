@@ -3,7 +3,7 @@
 
 struct slist{
 	int ssockc;
-	char hostname[35];
+	char hostname[33];
 	char ip_addr[16];
 	char port_num[5];
 	int sport;

@@ -437,6 +437,7 @@ void lister(char * cmnd_str,struct list *listc, struct slist *lists, int listlen
 		for(int i=0;i<listlen;i++){
 			//printf("%d %s %s %d",listc[i].list_id,listc[i].hostname,listc[i].ip_addr,listc[i].port_num);
 			cse4589_print_and_log("%-5d%-35s%-20s%-8d\n", listc[i].list_id, listc[i].hostname, listc[i].ip_addr, listc[i].port_num);
+			printf("%-5dlol%-35slol%-20slol%-8d\n", listc[i].list_id, listc[i].hostname, listc[i].ip_addr, listc[i].port_num);
 		}
 		ends(cmnd_str);
 	}
@@ -446,6 +447,7 @@ void lister(char * cmnd_str,struct list *listc, struct slist *lists, int listlen
 			int ctr = 1;
 			while(1){
 				cse4589_print_and_log("%-5d%-35s%-20s%-8d\n", ctr, lists->hostname, lists->ip_addr, atoi(lists->port_num));
+				printf("%-5dlol%-35slol%-20slol%-8d\n", ctr, lists->hostname, lists->ip_addr, atoi(lists->port_num));
 				ctr++;
 				if(lists->next!=NULL){
 					lists=lists->next;
@@ -490,16 +492,22 @@ void stats(char *cmnd_str,struct slist *lists ){
 
 int blockedf(char* cmnd_str, struct slist *lists, char *ip){
 	if(lists!=NULL){
+		printf("Lists present in blocked\n");
 		int ctr = 1;
 		while(1){
 			if(strcmp(lists->ip_addr,ip)==0){
 				for (int i = 0; i < lists->blocklen; i++){
-		        		for (int j = 0; j < (lists->blocklen -i -1); j++){
+					int swapped =0;
+		        		for (int j = 0; j < (lists->blocklen-1); j++){
 						if ((atoi(lists->blocked[j]->port_num)) > (atoi(lists->blocked[j + 1]->port_num))){
 							struct slist *temp = lists->blocked[j];
 							lists->blocked[j] = lists->blocked[j+1];
 							lists->blocked[j+1] = temp;
+							swapped =1;
 						}
+					}
+					if (!swapped){
+						break;
 					}
 				}
 				success(cmnd_str);
@@ -513,12 +521,12 @@ int blockedf(char* cmnd_str, struct slist *lists, char *ip){
 			if(lists->next!=NULL){
 				lists=lists->next;
 			}
-			else
+			else{
 				break;
+			}
 		}
-	
-		return -1;	
 	}
+	return -1;	
 }
 	
 
