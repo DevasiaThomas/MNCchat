@@ -220,7 +220,9 @@ void client(char *mode, char *port){
 							lister(cmd_str, listc, NULL, listlen);	
 						}
 						else if(strcmp("IP", cmd_str)==0){
-							dip(cmd_str,&client);
+							if(!dip(cmd_str)){
+								errr(cmd_str);
+							}
 						}
 					}		
 				}				

@@ -241,7 +241,9 @@ void server(char *mode, char *port){
 						lister(cmd_str, NULL, lists, NULL);	
 					}
 					else if(strcmp("IP", cmd_str)==0){
-						dip(cmd_str,NULL);
+						if(!dip(cmd_str)){
+							errr(cmd_str);
+						}
 					}
 					else if(strcmp("AUTHOR",cmd_str)==0){
 						author(cmd_str);
@@ -276,7 +278,7 @@ void server(char *mode, char *port){
 							}
 						}
 						while((!bflag)&&(top1!=NULL)){
-							if(!((strcmp(top1->ip_addr,ip_str)==0)&&(strcmp(top->port_num,top1->port_num)==0))){
+							if((strcmp(top1->ip_addr,ip_str)==0)){//&&(strcmp(top->port_num,top1->port_num)==0))){
 								sprintf(buff1,"%s %s",top->ip_addr,msg);
 								if(top1->status==1){
 									if(!sends(buff1,top1->ssockc)){
@@ -310,7 +312,7 @@ void server(char *mode, char *port){
 								}
 							}
 							if(!bflag){
-								if(!((strcmp(top->ip_addr,top1->ip_addr)==0)&&(strcmp(top->port_num,top1->port_num)==0))){
+								if((strcmp(top->ip_addr,top1->ip_addr)==0)){//&&(strcmp(top->port_num,top1->port_num)==0))){
 									if(top1->status==1){	
 										if(!sends(buff1,top1->ssockc)){
 											perror("BROADCASTing from server failed\n");

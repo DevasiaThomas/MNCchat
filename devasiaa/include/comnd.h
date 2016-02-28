@@ -24,7 +24,7 @@ int logout(char *cmnd_str, int s,struct list **listc, fd_set *fds);
 int dport(char *cmnd_str, char *port);
 //int block(char *cmnd_str, struct list *listc, int listlen);
 void lister(char * cmnd_str,struct list *listc, struct slist *lists, int listlen);
-int dip(char *cmnd_str,struct sockaddr_in *client);
+int dip(char *cmnd_str);
 void stats(char *cmnd_str, struct slist *lists);
 int blockedf(char* cmnd_str, struct slist *lists, char *ip);
 

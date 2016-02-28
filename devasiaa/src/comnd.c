@@ -436,7 +436,7 @@ void lister(char * cmnd_str,struct list *listc, struct slist *lists, int listlen
 		printf("In CLIST\n");
 		for(int i=0;i<listlen;i++){
 			//printf("%d %s %s %d",listc[i].list_id,listc[i].hostname,listc[i].ip_addr,listc[i].port_num);
-			cse4589_print_and_log("%-5d%-35s%-20s%-8d\n", listc[i].list_id, listc[i].hostname, listc[i].ip_addr, listc[i].port_num);
+			cse4589_print_and_log("%-5d%-35s %-20s%-8d\n", listc[i].list_id, listc[i].hostname, listc[i].ip_addr, listc[i].port_num);
 			printf("%-5dlol%-35slol%-20slol%-8d\n", listc[i].list_id, listc[i].hostname, listc[i].ip_addr, listc[i].port_num);
 		}
 		ends(cmnd_str);
@@ -446,7 +446,7 @@ void lister(char * cmnd_str,struct list *listc, struct slist *lists, int listlen
 		if(lists!=NULL){
 			int ctr = 1;
 			while(1){
-				cse4589_print_and_log("%-5d%-35s%-20s%-8d\n", ctr, lists->hostname, lists->ip_addr, atoi(lists->port_num));
+				cse4589_print_and_log("%-5d%-35s %-20s%-8d\n", ctr, lists->hostname, lists->ip_addr, atoi(lists->port_num));
 				printf("%-5dlol%-35slol%-20slol%-8d\n", ctr, lists->hostname, lists->ip_addr, atoi(lists->port_num));
 				ctr++;
 				if(lists->next!=NULL){
@@ -462,12 +462,46 @@ void lister(char * cmnd_str,struct list *listc, struct slist *lists, int listlen
 
 	
 
-int dip(char *cmnd_str,struct sockaddr_in *client){
-	printf("In here\n");
-	char buff[35];
-	if(gethostname(buff,35))
-		printf("%s",buff);
-	return 1;
+int dip(char *cmnd_str){
+	struct addrinfo hints,*result,*iter;
+	int status;
+	char hname[34];
+	char ip_str[16];
+	if(gethostname(hname,sizeof(hname))==-1){
+		perror("HOSTNAME ERROR");
+		return -1;
+	}
+	memset(&hints,0,sizeof(hints));
+	hints.ai_family=AF_INET;
+	hints.ai_socktype=SOCK_DGRAM;
+	if(getaddrinfo(hname,NULL,&hints,&result)!=0){
+	       	 fprintf(stderr,"getaddrinfo error: %s\n",gai_strerror(status));
+	       	 return -1;
+	}
+	for(iter=result;iter!=NULL;iter=iter->ai_next){
+		void *addr;
+		if(iter->ai_family==AF_INET){
+			struct sockaddr_in *afinet = (struct sockaddr_in *)iter->ai_addr;
+			addr = &(afinet->sin_addr);
+		}
+		else
+		{
+			continue;
+		}
+
+		if(inet_ntop(iter->ai_family,addr,ip_str,INET_ADDRSTRLEN)<=0)
+		{
+			printf("error in inet_ntop\n");
+			return -1;
+		}
+		success(cmd_str);
+		cse4589_print_and_log("IP:%s\n", ip_str);
+		ends(cmd_str);
+		freeaddrinfo(result);
+		return 1;
+	}
+	freeaddrinfo(result);
+	return -1;
 }	
 
 void stats(char *cmnd_str,struct slist *lists ){
@@ -475,7 +509,7 @@ void stats(char *cmnd_str,struct slist *lists ){
 	if(lists!=NULL){
 		int ctr = 1;
 		while(1){
-			cse4589_print_and_log("%-5d%-35s%-8d%-8d%-8s\n", ctr, lists->hostname, lists->sent, lists->recvd, (lists->status==0)?"offline":"online");
+			cse4589_print_and_log("%-5d%-35s %-8d%-8d%-8s\n", ctr, lists->hostname, lists->sent, lists->recvd, (lists->status==0)?"offline":"online");
 			ctr++;
 			if(lists->next!=NULL){
 				printf("Stats next exists\n");
