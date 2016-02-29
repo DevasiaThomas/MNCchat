@@ -375,6 +375,8 @@ void server(char *mode, char *port){
 							if(!((strcmp(top1->ip_addr,ip_str)==0)&&(strcmp(top->port_num,top1->port_num)==0))){
 								top->blocked[top->blocklen]=top1;
 								top->blocklen+=1;
+								printf("%s\n",top->blocked[top->blocklen-1]->ip_addr);
+								printf("%s\n",top->blocked[top->blocklen-1]->port_num);
 								if(top1->blockedby == NULL){
 									top1->blockedby = (struct slist **)malloc(top1->bbmax*sizeof(struct slist*));
 								}
@@ -384,6 +386,8 @@ void server(char *mode, char *port){
 								}
 								top1->blockedby[top1->blockbylen]=top;
 								top1->blockbylen+=1;
+								printf("%s\n",top1->blockedby[top1->blockbylen-1]->ip_addr);
+								printf("%s\n",top1->blockedby[top1->blockbylen-1]->port_num);
 								break;
 							}
 						top1= top1->next;
@@ -393,8 +397,10 @@ void server(char *mode, char *port){
 						token = strtok(NULL, "");
 						if(token!=NULL){
 							strcpy(ip_str,token);
+							printf("In here\n");
 						}
 						int bflag=0;
+						printf("blocklen %d\n",top->blocklen);
 						for(int i =0;i<(top->blocklen)-1;i++){
 							if(bflag||(strcmp(top->blocked[top->blocklen]->ip_addr, ip_str)==0)){
 								bflag=1;
@@ -405,8 +411,9 @@ void server(char *mode, char *port){
 						bflag=0;
 						while(top1!=NULL){
 							if(!((strcmp(top1->ip_addr,ip_str)==0)&&(strcmp(top->port_num,top1->port_num)==0))){
+								printf("blockbylen %d\n",top1->blockbylen);
 								for(int i =0;i<(top1->blockbylen)-1;i++){
-									if(bflag||(strcmp(top1->blockedby[top1->blockbylen]->ip_addr, ip_str)==0)){
+									if(bflag||(strcmp(top1->blockedby[top1->blockbylen]->ip_addr, ip_str)==0)){										
 										bflag=1;
 										top1->blockedby[top1->blockbylen]=top1->blockedby[(top1->blockbylen)+1];
 									}

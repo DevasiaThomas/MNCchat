@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<string.h>
 #include<unistd.h>
+#include<fcntl.h>
 #include<errno.h>
 #include<sys/types.h>
 #include<sys/socket.h>
@@ -297,36 +298,46 @@ int broadcasts(char *cmnd_str,int s, char *msg){
 
 int block(char *cmnd_str, int s,char **blocked, char *ip, struct list *listc, int listlen){	
 	char buff[MAX_LINE];
+	char *temp1 = NULL;
 	for(int i=0;i<listlen;i++){
 		if(strcmp(ip,listc[i].ip_addr)==0){
 			int ctr =0;
 			if(*blocked == NULL){
 				*blocked = (char *)malloc(17*sizeof(char));
 				sprintf(*blocked,"%s ",ip);
-				printf("%s",*blocked);
+				printf("New String %s",*blocked);
 			}
 			else{
-				char *temp1 = NULL, *token;
+				char *token;
 				token = strtok(*blocked," ");
 				while(token!=NULL){
 					if(strcmp(token,ip)==0)
 						return -1;
 					else{
+						if(temp1==NULL){
+							temp1 = (char *)malloc(17*sizeof(char));
+							temp1[0]='\0';
+						}
+						else{
+							temp1=realloc(temp1,strlen(temp1)+(17*sizeof(char)));
+						}
+						if(!temp1){
+							perror("No memmory\n");
+							exit(1);
+						}
+						sprintf((temp1+strlen(temp1))," %s",token);
 						ctr++;
 						token = strtok(NULL," ");
 					}
 				}
-				temp1=realloc(*blocked,(ctr+1)*17*sizeof(char));
-				if(!temp1){
-					perror("No memmory\n");
-					exit(1);
-				}
+				free(*blocked);
 				*blocked = temp1;
-				sprintf((*blocked+(ctr*17)),"%s ",ip);
 			}
 			sprintf(buff,"BLOCK %s", ip);
-			if(!sends(buff,s))
+			if(!sends(buff,s)){
+				printf("Cant send\n");
 				return -1;
+			}
 			else{
 				success(cmnd_str);
 				ends(cmnd_str);
@@ -350,7 +361,7 @@ int unblock(char *cmnd_str, int s,char **blocked, char *ip){
 		int ctr=0;
 		while(token!=NULL){
 			if(strcmp(token,ip)==0){
-				token = strtok(*blocked, "");
+				token = strtok(NULL, "");
 				if(temp1 == NULL){
 					if(token!=NULL){
 						temp1=(char*)malloc((strlen(token)+1)*sizeof(char));
@@ -360,6 +371,7 @@ int unblock(char *cmnd_str, int s,char **blocked, char *ip){
 					}
 					else{
 						free(*blocked);
+						*blocked = NULL;
 					}
 				}
 				else{
@@ -400,6 +412,8 @@ int unblock(char *cmnd_str, int s,char **blocked, char *ip){
 				token = strtok(*blocked," ");
 			}
 		}
+		free(*blocked);
+		*blocked=temp1;
 		return -1;
 	}							
 }
@@ -563,4 +577,70 @@ int blockedf(char* cmnd_str, struct slist *lists, char *ip){
 	return -1;	
 }
 	
+int sendfile(char *cmnd_str, char *ip, char *file, struct list *listc, int listlen){
+	int flag =0,i;
+	for(i=0;i<listlen;i++){
+		if(strcmp(ip,listc[i].ip_addr)==0){
+			flag=1;
+			break;
+		}
+	}
+	if(!flag){
+		return -1;
+	}
+	ssize_t read_bytes,sent_bytes,sent_file_size=0; // read, send over socket, filesize
+	char send_buf[MAX_LINE-1];
+	int sent_count=0; //chunks sent
+	int fd,sd;
+	struct sockaddr_in peer;
+	bzero((char *)&peer,sizeof(peer));
+	peer.sin_family = AF_INET;
+	if(!(inet_pton(AF_INET,ip_str, &(peer.sin_addr)))){
+		printf("Invalid IP\n");
+		return -1;
+	}
+	peer.sin_port = htons(listc[i].port_num);
 
+	if((sd = socket(AF_INET, SOCK_STREAM, 0))<0){
+		perror("listen:Cannot create socket\n");
+		exit(1);
+	}
+	if(connect(sd,(struct sockaddr *)&peer, sizeof(struct sockaddr_in))<0){
+		if(errno==ECONNREFUSED){
+			printf("Conn Refused\n");
+			return -1;
+		}
+		else{
+			perror("Connect failed\n");
+			close(sd);
+			exit(1);
+		}
+	}
+	
+
+	if((fd = open(file, O_RDONLY))< 0){
+		printf("Cannot Open File\n");
+		return -1;
+	}
+	else{
+		if(!sends(file,sd)){
+			printf("Sending Filename failed\n");
+			return -1;
+		}
+		printf("Sending file: %s\n", file);
+		while( (read_bytes = read(fd, send_buf, MAX_LINE-1)) > 0 ){
+			if((sent_bytes = send(sd, send_buf, read_bytes, 0))<read_bytes){
+				printf("sending file error\n");
+				return -1;
+			}
+			sent_count++;
+			sent_file_size += sent_bytes;
+		}
+		close(fd);
+	}
+	printf("File SENT. Sent %d bytes in %d chunks\n",sent_file_size, sent_count);
+	close(sd);
+	success(cmnd_str);
+	ends(cmnd_str);
+	return 1;
+}

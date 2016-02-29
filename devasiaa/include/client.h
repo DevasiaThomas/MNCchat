@@ -9,7 +9,7 @@ struct list{
 	int port_num;
 	};
 static int listlen;
-static int csockl, csocks, *csockp, csockplen;
+static int csockl, csocks, csockp;
 static char *blocked;
 
 void client(char *mode,char* port);

@@ -27,6 +27,7 @@ void lister(char * cmnd_str,struct list *listc, struct slist *lists, int listlen
 int dip(char *cmnd_str);
 void stats(char *cmnd_str, struct slist *lists);
 int blockedf(char* cmnd_str, struct slist *lists, char *ip);
+int sendfile(char *cmnd_str, char *ip, char *file, struct list *listc, int listlen);
 
 
 #endif

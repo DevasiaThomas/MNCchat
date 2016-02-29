@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<string.h>
 #include<unistd.h>
+#include<fcntl.h>
 #include<errno.h>
 #include<sys/types.h>
 #include<sys/socket.h>
@@ -186,7 +187,7 @@ void client(char *mode, char *port){
 								strcpy(ip_str,token);
 								if((block(cmd_str,csocks,&blocked,ip_str,listc,listlen))<0)
 									errr(cmd_str);
-								printf("%s",blocked);
+								printf("BLOCKED STRING %s\n",blocked);
 							}
 							else
 								errr(cmd_str);
@@ -197,7 +198,7 @@ void client(char *mode, char *port){
 								strcpy(ip_str,token);
 								if((unblock(cmd_str,csocks,&blocked,ip_str))<0)
 									errr(cmd_str);
-								printf("%s",blocked);
+								printf("BLOCKED STRING%s\n",blocked);
 							}
 							else
 								errr(cmd_str);
@@ -224,13 +225,31 @@ void client(char *mode, char *port){
 								errr(cmd_str);
 							}
 						}
+						else if(strcmp("SENDFILE", cmd_str)==0){
+							char filename[256];
+							token=strtok(NULL, " ");
+							if(token!=NULL){
+								strcpy(ip_str,token);
+							}
+							token=strtok(NULL,"");
+							if(token!=NULL){
+								strcpy(filename,token);
+							}
+							if(token == NULL){
+								errr(cmd_str);
+							}
+							else{
+								if((sendfile(cmd_str,ip_str,filename,listc,listlen))<0)
+									errr(cmd_str);
+							}
+						}
 					}		
 				}				
 			}
 			FD_CLR(STDIN,&read_fds);
 		}
 		if(FD_ISSET(csocks,&read_fds)){
-			printf("LISTENING PORT from server \n");
+			printf("Connecting PORT from server \n");
 			char *buff = recvs(csocks, &master);
 			if((buff!=NULL)&&(strlen(buff)>7)){
 				printf("After recieving %s\n",buff);
@@ -238,6 +257,51 @@ void client(char *mode, char *port){
 				free(buff);
 			}
 			FD_CLR(csocks,&read_fds);
+		}
+		if(FD_ISSET(csockl,&read_fds)){
+			int fd;
+			printf("Listening Socket--Data Connection\n");
+			struct sockaddr_in peer;
+			bzero((char *)&peer, sizeof(peer));
+			len=sizeof(peer);						
+			if((csockp = accept(csockl,(struct sockaddr *)&peer, &len))<0){
+				perror("Accept failed\n");
+				close(csockp);
+				exit(1);
+			}
+			char *filename = recvs(csockp,&master);
+			
+			if(strlen(filename)<1){
+				printf("No filename\n");
+				close(csockp);
+			}
+			else{
+				ssize_t sent_bytes, rcvd_bytes, rcvd_file_size = 0;
+				int recv_count=0;char recv_buff[MAX_LINE];
+				// attempt to create file to save received data. 0644 = rw-r--r-- 
+				if ((fd=open(filename, O_WRONLY|O_CREAT, 0644))<0)
+				{
+					perror("error creating file");
+					exit(1);
+				}
+				while ((rcvd_bytes=recv(csockp, recv_buff, MAX_LINE, 0))> 0)
+				{
+					recv_count++;
+					rcvd_file_size += rcvd_bytes;
+					if (write(fd, recv_buff, rcvd_bytes) < 0 )
+					{
+						perror("error writing to file");
+						exit(1);
+					}
+				}
+				close(fd); /* close file*/
+				printf("Client Received: %d bytes in %d recv(s)\n", rcvd_file_size, recv_count);
+			}
+			free(filename);
+			close(csockp);
+			success("RECVFILE");
+			ends("RECVFILE");
+			//FD_CLR(ssockl,&read_fds);
 		}
 	}
 }
